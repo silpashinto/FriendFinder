@@ -19,7 +19,8 @@
         crossorigin="anonymous"></script>
 
     <!-- Validate.js link -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/validate.js/0.12.0/validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.js"></script>
+
 
     <!-- Font Awesome link -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -31,12 +32,13 @@
 <body class="bg">
     <div class="container">
         <div class="jumbotron surveypage"><a href="/home"><i class="fa fa-home fa-3x" aria-hidden="true"></i></a>
-
+            <a href="/api/friends">API Friend List</a> | <a href="https://silpashinto.github.io/FriendFinder/"
+                target="_blank">GitHub Repo</a>
             <h1>Survey Questions</h1>
             <hr>
             <div class="row">
                 <div class="col-lg-12">
-                    <form>
+                    <form id="form">
                         <!--Basic questionnaire-->
                         <h2>About You</h2>
                         <div class="form-group">
@@ -69,7 +71,7 @@
                 <!-- Modal content-->
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        
                         <h4 class="modal-title">Your best match!</h4>
                     </div>
                     <div class="modal-body" id="modalContent"></div>
@@ -137,10 +139,10 @@
                 var br = $('<br>');
                 questionDiv.append(item, br);
             });
-
             $("#submit-btn").on("click", function (event) {
 
                 event.preventDefault();
+
                 var userName = $('#userName').val().trim();
                 var imageLink = $('#imageLink').val().trim();
                 var answers = [];
@@ -149,41 +151,38 @@
                     for (var k = 1; k <= survey_questions.length; k++) {
                         answers.push($('#select_' + k).val());
                     }
+                    var surveyResult = {
+                        name: userName,
+                        photo: imageLink,
+                        scores: answers
+                    };
 
-                }
+                    $.post("/api/friends", surveyResult)
+                        .then(function (data) {
 
-                var surveyResult = {
-                    name: userName,
-                    photo: imageLink,
-                    scores: answers
-                };
+                            if (data) {
 
-                $.post("/api/friends", surveyResult)
-                    .then(function (data) {
+                                // Empty out modal and username and link fields.
+                                $('#modalContent').empty();
+                                $('#userName').val('');
+                                $('#imageLink').val('');
+                                
+                                data.forEach(function (matchProfile) {
+                                    var profileDiv = $('<div>').attr('class', "profile");
+                                    var name = $('<h4>').text(matchProfile.name);
+                                    var photo = $('<img>').attr('src', matchProfile.photo);
+                                    profileDiv.append(name, photo);
 
+                                    $('#modalContent').append(profileDiv);
+                                });
 
-                        if (data) {
- 
-                           // Empty out modal and username and link fields.
-                            $('#modalContent').empty();
-                            $('#userName').val('');
-                            $('#imageLink').val('');
+                                // Display the result modal.
+                                $('#resultModal').modal();
+                            }
 
-                       
-                            data.forEach(function (matchProfile) {
-                                var profileDiv = $('<div>').attr('class', "profile");
-                                var name = $('<h4>').text(matchProfile.name);
-                                var photo = $('<img>').attr('src', matchProfile.photo);
-                                profileDiv.append(name, photo);
-
-                                $('#modalContent').append(profileDiv);
-                            });
-
-                            // Display the result modal.
-                            $('#resultModal').modal();
-                        }
-
-                    });
+                        });
+                } else
+                    alert('Fill the required fields');
             });
         });
     </script>
