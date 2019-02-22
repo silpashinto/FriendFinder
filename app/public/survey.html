@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>FriendFinder:Survey</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Bootstrap link -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+
+    <!-- Validate.js link -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/validate.js/0.12.0/validate.min.js"></script>
+
+    <!-- Font Awesome link -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- CSS file link -->
+    <link rel="stylesheet" type="text/css" media="screen" href="./assets/css/style.css" />
+</head>
+
+<body class="bg">
+    <div class="container">
+        <div class="jumbotron surveypage"><a href="/home"><i class="fa fa-home fa-3x" aria-hidden="true"></i></a>
+
+            <h1>Survey Questions</h1>
+            <hr>
+            <div class="row">
+                <div class="col-lg-12">
+                    <form>
+                        <!--Basic questionnaire-->
+                        <h2>About You</h2>
+                        <div class="form-group">
+                            <label for="userName">Name(Required)</label>
+                            <input type="text" class="form-control" id="userName">
+                        </div>
+                        <div class="form-group">
+                            <label for="imageLink">Link to Photo Image (Required)</label>
+                            <input type="url" class="form-control" id="imageLink">
+                        </div>
+                        <hr>
+                        <!-- Questions will be inserted here. -->
+
+                        <div id="questions"></div>
+
+                </div>
+                <button type="submit" class="btn btn-success btn-lg btn-block" id="submit-btn">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>&nbsp;Submit</button>
+
+                </form>
+            </div>
+        </div>
+
+
+
+        <!-- Result Modal -->
+        <div id="resultModal" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Your best match!</h4>
+                    </div>
+                    <div class="modal-body" id="modalContent"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            // Questions 
+            var survey_questions = [
+                'Your mind is always buzzing with unexplored ideas and plans.',
+                'Generally speaking, you rely more on your experience than your imagination.',
+                'You find it easy to stay relaxed and focused even when there is some pressure',
+                'You rarely do something just out of sheer curiosity.',
+                'People can rarely upset you.',
+                'It is often difficult for you to relate to other people’s feelings.',
+                'In a discussion, truth should be more important than people’s sensitivities.',
+                'You rarely get carried away by fantasies and ideas.',
+                'You think that everyone’s views should be respected regardless of whether they are supported by facts or not',
+                'You feel more energetic after spending time with a group of people.'
+            ];
+
+            // Choices 
+            var choices = ['Select an Option',
+                '1 (Strongly Disagree)',
+                '2',
+                '3',
+                '4',
+                '5 (Strongly Agree)'
+            ];
+
+            var questionDiv = $('#questions');
+            i = 0;
+
+            // For each question, create a div.
+            survey_questions.forEach(function (survey_questions) {
+                i++;
+                var item = $('<div class="question">');
+                var questionNo = $('<h4>').text('Question ' + i);
+                var questionText = $('<p>').text(survey_questions);
+                var dropDownRow = $('<div class="row">');
+                var dropDownColumn = $('<div class="col-lg-3">');
+
+                var dropDown = $('<div class="form-group">');
+                var select = $('<select class="form-control form-control-sm selector">');
+
+                var option;
+                for (var j = 0; j < choices.length; j++) {
+                    option = $('<option>').attr('value', j).text(choices[j]);
+                    select.append(option);
+                }
+                select.attr('id', 'select_' + i);
+                dropDown.append(select);
+                dropDownColumn.append(dropDown);
+                dropDownRow.append(dropDownColumn);
+                item.append(questionNo, questionText, dropDownRow);
+
+                var br = $('<br>');
+                questionDiv.append(item, br);
+            });
+
+            $("#submit-btn").on("click", function (event) {
+
+                event.preventDefault();
+                var userName = $('#userName').val().trim();
+                var imageLink = $('#imageLink').val().trim();
+                var answers = [];
+
+                if (userName && imageLink) {
+                    for (var k = 1; k <= survey_questions.length; k++) {
+                        answers.push($('#select_' + k).val());
+                    }
+
+                }
+
+                var surveyResult = {
+                    name: userName,
+                    photo: imageLink,
+                    scores: answers
+                };
+
+                $.post("/api/friends", surveyResult)
+                    .then(function (data) {
+
+
+                        if (data) {
+ 
+                           // Empty out modal and username and link fields.
+                            $('#modalContent').empty();
+                            $('#userName').val('');
+                            $('#imageLink').val('');
+
+                       
+                            data.forEach(function (matchProfile) {
+                                var profileDiv = $('<div>').attr('class', "profile");
+                                var name = $('<h4>').text(matchProfile.name);
+                                var photo = $('<img>').attr('src', matchProfile.photo);
+                                profileDiv.append(name, photo);
+
+                                $('#modalContent').append(profileDiv);
+                            });
+
+                            // Display the result modal.
+                            $('#resultModal').modal();
+                        }
+
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
