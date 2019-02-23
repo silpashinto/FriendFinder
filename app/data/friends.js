@@ -1,7 +1,7 @@
 module.exports = [
     {
     "name": "Shinto",
-    "photo": "https://investorplace.com/wp-content/uploads/2013/02/tom-brady-headshot.jpg",
+    "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Brad_Pitt_June_2014_%28cropped%29.jpg/170px-Brad_Pitt_June_2014_%28cropped%29.jpg",
     "scores": [
         5,
         1,
